@@ -24,6 +24,7 @@
 %% Application handling API
 
 -export([
+	 call/3,
 	 all_raw/0,
 	 all/0,
 	 present/0
@@ -76,6 +77,20 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+%%--------------------------------------------------------------------
+%% @doc
+%% This function is an user interface to be complementary to automated
+%% load and start a provider at this host.
+%% In v1.0.0 the deployment will not be persistant   
+%% @end
+%%--------------------------------------------------------------------
+-spec call(Name :: string(),Function :: atom(), Args :: term()) -> Result :: term() |{error, Error :: term()}.
+%%  Tabels or State
+%%
+
+call(Name,Function, Args) ->
+    gen_server:call(?SERVER,{call,Name,Function, Args},infinity).
+
 %%--------------------------------------------------------------------
 %% @doc
 %% This function is an user interface to be complementary to automated
@@ -200,6 +215,19 @@ init([]) ->
 	  {stop, Reason :: term(), NewState :: term()}.
 
 
+
+handle_call({call,Name,Function, Args}, _From, State) ->
+    io:format(" ~p~n",[{?MODULE,?LINE}]),
+    Reply=case rpc:call(node(),lib_zigbee_devices,get_num_map_module,[Name],5000) of
+	      {badrpc,Reason}->
+		  {error,["badrpc ",Reason,?MODULE,?LINE]};
+	     {error,Reason}->
+		 {error,Reason};
+	     {ok,_Type,NumId,Map,Module}->
+		  io:format(" NumId,Map,Module ~p~n",[{Module,NumId,Map,?MODULE,?LINE}]),
+		 rpc:call(node(),Module,Function,[Args,NumId,Map],5000)
+	 end,
+    {reply, Reply, State};
 
 handle_call({all_raw}, _From, State) ->
    % Reply = case rd:call(lgh_prhoscon,get_maps,[],5000) of

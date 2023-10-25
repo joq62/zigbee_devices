@@ -12,6 +12,7 @@
 
 %% API
 -export([
+	 get_num_map_module/1,
 	 all/0,
 	 all_raw/0,
 	 present/0
@@ -20,6 +21,25 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_num_map_module(Name)->
+    TYpeNumIdMapList= [{Type,NumId,Map}||{Type,NumId,Map}<-all_raw(),
+					 Name=:=binary_to_list(maps:get(<<"name">>,Map))],
+    case TYpeNumIdMapList of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{Type,NumId,Map}|_]->
+	    ModelId=binary_to_list(maps:get(<<"modelid">>,Map)),
+	    [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
+						  ModelId=:=maps:get(modelid,DeviceMap)],
+	    {ok,Type,NumId,Map,Module}
+			       
+    end.
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec

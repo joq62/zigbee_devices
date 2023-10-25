@@ -99,17 +99,16 @@ test_tradfri_bulb_e27_cws_806lm()->
 test_tradfri_control_outlet()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
-   {200,_,_}=zigbee_devices:call("outlet_1",turn_on,[]),
+   {200,_,_}=tradfri_control_outlet:turn_on("outlet_1"),
     timer:sleep(200),
-    true=zigbee_devices:call("outlet_1",is_reachable,[]),
-    false=zigbee_devices:call("outlet_1",is_off,[]),
-    true=zigbee_devices:call("outlet_1",is_on,[]),
+    true=tradfri_control_outlet:is_reachable("outlet_1"),
+    false=tradfri_control_outlet:is_off("outlet_1"),
+    true=tradfri_control_outlet:is_on("outlet_1"),
 
-    {200,_,_}={200,_,_}=zigbee_devices:call("outlet_1",turn_off,[]),
+    {200,_,_}=tradfri_control_outlet:turn_off("outlet_1"),
     timer:sleep(2000),
-    true=zigbee_devices:call("outlet_1",is_off,[]),
-    false=zigbee_devices:call("outlet_1",is_on,[]),
-
+    true=tradfri_control_outlet:is_off("outlet_1"),
+    false=tradfri_control_outlet:is_on("outlet_1"),
     
     ok.
 %% --------------------------------------------------------------------

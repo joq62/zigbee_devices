@@ -30,11 +30,11 @@
 
 %% External exports
 -export([
-	 is_reachable/3,
+	 is_reachable/1,
 	 is_on/3,
-	 is_off/3,
-	 turn_on/3,
-	 turn_off/3
+	 is_off/1,
+	 turn_on/1,
+	 turn_off/1
 	]). 
 
 
@@ -48,22 +48,32 @@
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_reachable([],_NumId,Map)->
-    StateMap=maps:get(<<"state">>,Map),
-    maps:get(<<"reachable">>,StateMap).
+is_reachable([],NumId,Map)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,_NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    maps:get(<<"reachable">>,StateMap)
+    end.
 	   
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_on([],_NumId,Map)->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    maps:get(<<"on">>,StateMap)
+is_on([],NumId,Map)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,_NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    maps:get(<<"on">>,StateMap)
+	    end
     end.
 %%--------------------------------------------------------------------
 %% @doc
@@ -71,23 +81,28 @@ is_on([],_NumId,Map)->
 %% @end
 %%--------------------------------------------------------------------
 is_off([],NumId,Map)->
-    false=:=is_on([],NumId,Map).
+    false=:=is_on(Name).
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 turn_on([],NumId,Map)->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=true,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    Id=NumId,
+		    Key=list_to_binary("on"),
+		    Value=true,
+		    DeviceType=?Type,
+		    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+	    end
     end.
 %%--------------------------------------------------------------------
 %% @doc
@@ -95,16 +110,21 @@ turn_on([],NumId,Map)->
 %% @end
 %%--------------------------------------------------------------------
 turn_off([],NumId,Map)->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=false,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    Id=NumId,
+		    Key=list_to_binary("on"),
+		    Value=false,
+		    DeviceType=?Type,
+		    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+	    end
     end.
 
 
@@ -116,6 +136,11 @@ turn_off([],NumId,Map)->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
+get_info(Name)->
+    Result= [{?Type,NumId,Map}||{?Type,NumId,Map}<-zigbee_devices:all_raw(),
+				Name=:=binary_to_list(maps:get(<<"name">>,Map)),
+				?ModelId=:=binary_to_list(maps:get(<<"modelid">>,Map))],
+    Result.
 
 
 		    
