@@ -36,6 +36,10 @@ start()->
    
     ok=setup(),
     ok=test1(),
+    ok=test2(),
+    ok=test_tradfri_bulb_e27_cws_806lm(),
+    ok=test_tradfri_control_outlet(),
+    ok=test_lumi_weather(),
    
     io:format("Test OK !!! ~p~n",[?MODULE]),
     timer:sleep(2000),
@@ -52,6 +56,77 @@ test1()->
     AllDevices=zigbee_devices:all(),
     io:format("AllDevices ~p~n",[{AllDevices,?MODULE,?FUNCTION_NAME}]),    
 
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test2()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    AllMaps=zigbee_devices:all_raw(),
+    io:format("AllMaps ~p~n",[{AllMaps,?MODULE,?FUNCTION_NAME}]),    
+
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_tradfri_bulb_e27_cws_806lm()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+   {200,_,_}=tradfri_bulb_e27_cws_806lm:turn_on("lamp_1"),
+    timer:sleep(200),
+    true=tradfri_bulb_e27_cws_806lm:is_reachable("lamp_1"),
+    false=tradfri_bulb_e27_cws_806lm:is_off("lamp_1"),
+    true=tradfri_bulb_e27_cws_806lm:is_on("lamp_1"),
+
+    {200,_,_}=tradfri_bulb_e27_cws_806lm:turn_off("lamp_1"),
+    timer:sleep(2000),
+    true=tradfri_bulb_e27_cws_806lm:is_off("lamp_1"),
+    false=tradfri_bulb_e27_cws_806lm:is_on("lamp_1"),
+    
+    
+
+    
+
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_tradfri_control_outlet()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+   {200,_,_}=tradfri_control_outlet:turn_on("outlet_1"),
+    timer:sleep(200),
+    true=tradfri_control_outlet:is_reachable("outlet_1"),
+    false=tradfri_control_outlet:is_off("outlet_1"),
+    true=tradfri_control_outlet:is_on("outlet_1"),
+
+    {200,_,_}=tradfri_control_outlet:turn_off("outlet_1"),
+    timer:sleep(2000),
+    true=tradfri_control_outlet:is_off("outlet_1"),
+    false=tradfri_control_outlet:is_on("outlet_1"),
+    
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_lumi_weather()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+    true=lumi_weather:is_reachable("weather_1"),
+    Temp=lumi_weather:temp("weather_1"),
+    io:format("Temp ~p~n",[{Temp,?MODULE,?LINE}]),
+    Humidity=lumi_weather:humidity("weather_1"),
+    io:format("Humidity ~p~n",[{Humidity,?MODULE,?LINE}]),
+    Pressure=lumi_weather:pressure("weather_1"),
+    io:format("Pressure ~p~n",[{Pressure,?MODULE,?LINE}]),
+    
     ok.
 
     

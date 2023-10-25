@@ -24,6 +24,7 @@
 %% Application handling API
 
 -export([
+	 all_raw/0,
 	 all/0,
 	 present/0
 	]).
@@ -75,6 +76,20 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+%%--------------------------------------------------------------------
+%% @doc
+%% This function is an user interface to be complementary to automated
+%% load and start a provider at this host.
+%% In v1.0.0 the deployment will not be persistant   
+%% @end
+%%--------------------------------------------------------------------
+-spec all_raw() -> ListOfMaps :: term() |{error, Error :: term()}.
+%%  Tabels or State
+%%
+
+all_raw() ->
+    gen_server:call(?SERVER,{all_raw},infinity).
+
 %%--------------------------------------------------------------------
 %% @doc
 %% This function is an user interface to be complementary to automated
@@ -186,6 +201,11 @@ init([]) ->
 
 
 
+handle_call({all_raw}, _From, State) ->
+   % Reply = case rd:call(lgh_prhoscon,get_maps,[],5000) of
+    Reply =lib_zigbee_devices:all_raw(),
+    {reply, Reply, State};
+
 handle_call({all}, _From, State) ->
    % Reply = case rd:call(lgh_prhoscon,get_maps,[],5000) of
     Reply =lib_zigbee_devices:all(),
@@ -193,12 +213,7 @@ handle_call({all}, _From, State) ->
 
 
 handle_call({present}, _From, State) ->
-    Reply = case rd:call(phoscon_control,get_maps,[],5000) of
-		{error,Reason}->
-		    {error,Reason};
-		Maps->
-		    {ok,Maps}
-	    end,
+    Reply = lib_zigbee_devices:present(),
     
     {reply, Reply, State};
 

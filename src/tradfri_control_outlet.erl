@@ -12,21 +12,29 @@
 -define(ModelId,"TRADFRI control outlet").
 -define(Type,"lights").
 %% --------------------------------------------------------------------
-%   {"TRADFRI control outlet",
-%     "2",
-%         #{<<"alert">> => <<"none">>,
-%           <<"on">> => false,
-%           <<"reachable">> => false}},
-
+% {"lights","13",
+%           #{<<"etag">> => <<"7446fcc9423ed952e0651340cca23573">>,
+%             <<"hascolor">> => false,<<"lastannounced">> => null,
+%             <<"lastseen">> => <<"2023-09-13T18:41Z">>,
+%             <<"manufacturername">> => <<"IKEA of Sweden">>,
+%             <<"modelid">> => <<"TRADFRI control outlet">>,
+%             <<"name">> => <<"outlet_1">>,
+%             <<"state">> =>
+%                 #{<<"alert">> => <<"none">>,<<"on">> => false,
+%                   <<"reachable">> => false},
+%             <<"swversion">> => <<"2.0.024">>,
+%             <<"type">> => <<"On/Off plug-in unit">>,
+%             <<"uniqueid">> => <<"94:34:69:ff:fe:01:4e:b0-01">>}},
 
 
 
 %% External exports
 -export([
+	 is_reachable/1,
 	 is_on/1,
-	 set/2,
-	 reachable/1
-	 
+	 is_off/1,
+	 turn_on/1,
+	 turn_off/1
 	]). 
 
 
@@ -34,52 +42,106 @@
 %% External functions
 %% ====================================================================
 
-%% zigbee_server:is_on("switch_prototype")
-%  zigbee_server:is_reachable("switch_prototype")
-%  Switch=rd:rpc_call(hw_conbee,hw_conbee,get,["switch_prototype"],2000),
-% Switch {{ok,[{"switch_prototype","5","TRADFRI control outlet","lights",
-%              #{<<"alert">> => <<"none">>,<<"on">> => true,
-%                <<"reachable">> => true}}]},
-%% zigbee_server:set("switch_prototype","off")
-%%  Switch=rd:rpc_call(hw_conbee,hw_conbee,set,["switch_prototype","off"],2000),
-
 
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-set(Name,State)->
-    sd:call(hw_conbee_app,hw_conbee,set,[Name,State],5000).
-
-
-
+is_reachable(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,_NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    maps:get(<<"reachable">>,StateMap)
+    end.
+	   
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_on(DeviceName)->
-    Result=case sd:call(hw_conbee_app,hw_conbee,device_info,[DeviceName],5000) of
-	       {ok,[DeviceInfo]}-> 
-		   Status=maps:get(device_status,DeviceInfo),
-		   maps:get(<<"on">>,Status);
-	       Reason ->
-		    {error,[Reason,?MODULE,?LINE]}
-	   end,
+is_on(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,_NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    maps:get(<<"on">>,StateMap)
+	    end
+    end.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+is_off(Name)->
+    false=:=is_on(Name).
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+turn_on(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    Id=NumId,
+		    Key=list_to_binary("on"),
+		    Value=true,
+		    DeviceType=?Type,
+		    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+	    end
+    end.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+turn_off(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,NumId,Map}]->
+	    StateMap=maps:get(<<"state">>,Map),
+	    case maps:get(<<"reachable">>,StateMap) of
+		false->
+		    {error,["Name is not reachable",Name,?MODULE,?LINE]};
+		true->
+		    Id=NumId,
+		    Key=list_to_binary("on"),
+		    Value=false,
+		    DeviceType=?Type,
+		    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+	    end
+    end.
+
+
+%% ====================================================================
+%% Internal functions
+%% ====================================================================
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_info(Name)->
+    Result= [{?Type,NumId,Map}||{?Type,NumId,Map}<-zigbee_devices:all_raw(),
+				Name=:=binary_to_list(maps:get(<<"name">>,Map)),
+				?ModelId=:=binary_to_list(maps:get(<<"modelid">>,Map))],
     Result.
 
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-reachable(DeviceName)->
-   Result=case sd:call(hw_conbee,hw_conbee,device_info,[DeviceName],1000) of
-	      {ok,[DeviceInfo]}->
-		  Status=maps:get(device_status,DeviceInfo),
-		  maps:get(<<"reachable">>,Status);
-	      Reason ->
-		  {error,[Reason,?MODULE,?LINE]} 
-	   end,
-    Result.
+
+		    
+    

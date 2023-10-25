@@ -8,14 +8,43 @@
 %%%-------------------------------------------------------------------
 -module(lib_zigbee_devices).
 
+-include("device.hrl").
+
 %% API
 -export([
-	all/0
+	 all/0,
+	 all_raw/0,
+	 present/0
 	]).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+present()->
+    
+
+
+    ok.
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+all_raw()->
+    Result=case rd:call(phoscon_control,get_maps,[],5000) of
+	       {error,Reason}->
+		   {error,[Reason,?MODULE,?LINE]};
+	       TypeMaps->
+		   get_info_raw(TypeMaps,[])
+	   end,
+    Result.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -31,18 +60,28 @@ all()->
 	   end,
     Result.
 
-	 %   R1=lists:append([maps:to_list(Map)||{_Type,Map}<-Maps]),
-	%	    io:format("R1 =~p~n",[{R1,?MODULE,?LINE}]),
-		    
-	%	    R=[{binary_to_list(maps:get(<<"name">> ,Map)),
-	%		binary_to_list(maps:get(<<"modelid">>,Map))			
-	%	       }||{NumId,Map}<-R1], 
-						%	    R=[Map||{NumId,Map}<-R1],
-		    
+
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_info_raw([],Acc)->
+    lists:append(Acc);
+get_info_raw([{Type,Map}|T],Acc)->
+    L=maps:to_list(Map),
+    AllMaps=format_info_raw(L,Type,[]),
+    get_info_raw(T,[AllMaps|Acc]).
+
+format_info_raw([],_Type,Acc)->
+    Acc;
+format_info_raw([{NumIdBin,Map}|T],Type,Acc)->
+    NumId=binary_to_list(NumIdBin),
+    format_info_raw(T,Type,[{Type,NumId,Map}|Acc]).
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec

@@ -12,17 +12,62 @@
 -define(ModelId,"lumi.weather").
 -define(Type,"sensors").
 %% --------------------------------------------------------------------
-%   {"TRADFRI control outlet",
-%     "2",
-%         #{<<"alert">> => <<"none">>,
-%           <<"on">> => false,
-%           <<"reachable">> => false}},
-
-
+ %{"sensors","6",
+ %          #{<<"config">> =>
+ %                #{<<"battery">> => 98,<<"offset">> => 0,<<"on">> => true,
+ %                  <<"reachable">> => true},
+ %            <<"ep">> => 1,
+ %            <<"etag">> => <<"a593c30c0ad620e476830b17586cff50">>,
+ %            <<"lastannounced">> => null,
+ %            <<"lastseen">> => <<"2023-10-30T21:11Z">>,
+ %            <<"manufacturername">> => <<"LUMI">>,
+ %            <<"modelid">> => <<"lumi.weather">>,
+ %            <<"name">> => <<"weather_1">>,
+ %            <<"state">> =>
+ %                #{<<"lastupdated">> => <<"2023-10-30T21:05:25.419">>,
+ %                  <<"pressure">> => 1011},
+ %            <<"swversion">> => <<"3000-0001">>,
+ %            <<"type">> => <<"ZHAPressure">>,
+ %            <<"uniqueid">> => <<"00:15:8d:00:06:e3:cf:fe-01-0403">>}},
+ %{"sensors","5",
+ %          #{<<"config">> =>
+ %                #{<<"battery">> => 98,<<"offset">> => 0,<<"on">> => true,
+ %                  <<"reachable">> => true},
+ %            <<"ep">> => 1,
+ %            <<"etag">> => <<"8c4112cbba9448324a7a18ef43b7f256">>,
+ %            <<"lastannounced">> => null,
+ %            <<"lastseen">> => <<"2023-10-30T21:11Z">>,
+ %            <<"manufacturername">> => <<"LUMI">>,
+ %            <<"modelid">> => <<"lumi.weather">>,
+ %            <<"name">> => <<"weather_1">>,
+ %            <<"state">> =>
+ %                #{<<"lastupdated">> => <<"2023-10-30T21:05:25.362">>,
+ %                  <<"temperature">> => 2341},
+ %            <<"swversion">> => <<"3000-0001">>,
+ %            <<"type">> => <<"ZHATemperature">>,
+ %            <<"uniqueid">> => <<"00:15:8d:00:06:e3:cf:fe-01-0402">>}},
+ %         {"sensors","4",
+ %          #{<<"config">> =>
+ %                #{<<"battery">> => 98,<<"offset">> => 0,<<"on">> => true,
+ %                  <<"reachable">> => true},
+ %            <<"ep">> => 1,
+ %            <<"etag">> => <<"8c4112cbba9448324a7a18ef43b7f256">>,
+ %            <<"lastannounced">> => null,
+ %            <<"lastseen">> => <<"2023-10-30T21:11Z">>,
+ %            <<"manufacturername">> => <<"LUMI">>,
+ %            <<"modelid">> => <<"lumi.weather">>,
+ %            <<"name">> => <<"weather_1">>,
+ %            <<"state">> =>
+ %                #{<<"humidity">> => 3454,
+ %                  <<"lastupdated">> => <<"2023-10-30T21:05:25.395">>},
+ %            <<"swversion">> => <<"3000-0001">>,
+ %            <<"type">> => <<"ZHAHumidity">>,
+ %            <<"uniqueid">> => <<"00:15:8d:00:06:e3:cf:fe-01-0405">>}},
 
 
 %% External exports
 -export([
+	 is_reachable/1,
 	 temp/1,
 	 humidity/1,
 	 pressure/1
@@ -32,58 +77,77 @@
 %% ====================================================================
 %% External functions
 %% ====================================================================
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-
-temp(DeviceName)->
-    Result=case sd:call(hw_conbee_app,hw_conbee,device_info,[DeviceName],5000) of
-	       {ok,Maps}-> 
-		   [WantedMap]=[Map||Map<-Maps,
-				     lists:member(<<"temperature">>, maps:keys(maps:get(device_status,Map)))],
-		   StateMap=maps:get(device_status,WantedMap),
-		   TempRaw=maps:get(<<"temperature">>,StateMap),
-		   {ok,float_to_list(TempRaw/100,[{decimals,1}])};
-	       Reason ->
-		   {error,[Reason,?MODULE,?LINE]} 
-	   end,
-    Result.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+is_reachable(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	[{?Type,_NumId,Map}|_]->
+	    ConfigMap=maps:get(<<"config">>,Map),
+	    maps:get(<<"reachable">>,ConfigMap)
+    end.
     
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-humidity(DeviceName)->
-    Result=case sd:call(hw_conbee_app,hw_conbee,device_info,[DeviceName],2000) of
-	       {ok,Maps}-> 
-		   [WantedMap]=[Map||Map<-Maps,
-				     lists:member(<<"humidity">>, maps:keys(maps:get(device_status,Map)))],
-		   StateMap=maps:get(device_status,WantedMap),
-		   HumidityRaw=maps:get(<<"humidity">>,StateMap),
-		   {ok,float_to_list(HumidityRaw/100,[{decimals,1}])++"%"};
-	       Reason ->
-		   {error,[Reason,?MODULE,?LINE]} 
-	   end,
-    Result.
-
+temp(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	ListTypeNumMap->
+	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
+	    [Raw]=[maps:get(<<"temperature">>,StateMap)||StateMap<-StateMaps,
+							     true=:=maps:is_key(<<"temperature">>,StateMap)],
+	    Raw/100
+    end.
+							     
+							     
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-%<<"pressure">>
-pressure(DeviceName)->
-    Result=case sd:call(hw_conbee_app,hw_conbee,device_info,[DeviceName],5000) of
-	       {ok,Maps}-> 
-		   [WantedMap]=[Map||Map<-Maps,
-				     lists:member(<<"pressure">>, maps:keys(maps:get(device_status,Map)))],
-		   StateMap=maps:get(device_status,WantedMap),
-		   PressureRaw=maps:get(<<"pressure">>,StateMap),
-		   {ok, integer_to_list(PressureRaw)};
-	       Reason ->
-		   {error,[Reason,?MODULE,?LINE]} 
-	   end,
+humidity(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	ListTypeNumMap->
+	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
+	    [Raw]=[maps:get(<<"humidity">>,StateMap)||StateMap<-StateMaps,
+							     true=:=maps:is_key(<<"humidity">>,StateMap)],
+	    Raw/100
+    end.
+							     
+							     
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+pressure(Name)->
+    case get_info(Name) of
+	[]->
+	    {error,["Name not found",Name,?MODULE,?LINE]};
+	ListTypeNumMap->
+	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
+	    [Raw]=[maps:get(<<"pressure">>,StateMap)||StateMap<-StateMaps,
+							     true=:=maps:is_key(<<"pressure">>,StateMap)],
+	    Raw
+    end.
+	
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_info(Name)->
+    Result= [{?Type,NumId,Map}||{?Type,NumId,Map}<-zigbee_devices:all_raw(),
+				Name=:=binary_to_list(maps:get(<<"name">>,Map)),
+				?ModelId=:=binary_to_list(maps:get(<<"modelid">>,Map))],
     Result.
