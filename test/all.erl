@@ -35,8 +35,13 @@
 start()->
    
     ok=setup(),
-    ok=test1(),
-    ok=test2(),
+
+    ok=test_lumi_motion(),
+    ok=test_lumi_vibration(),
+    ok=test_tradfri_motion(),
+%    ok=test_lumi_magnetic(),
+ %   ok=test1(),
+ %   ok=test2(),
     ok=test_tradfri_control_outlet(), 
     ok=test_tradfri_bulb_e27_cws_806lm(),
     ok=test_lumi_weather(),
@@ -45,6 +50,87 @@ start()->
     io:format("Test OK !!! ~p~n",[?MODULE]),
     timer:sleep(2000),
 %    init:stop(),
+    ok.
+
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_lumi_motion()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    io:format("Doesnt work  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+    true=zigbee_devices:call("lumi_motion_1",is_reachable,[]),
+    Presence=zigbee_devices:call("lumi_motion_1",is_presence,[]),
+    io:format("Presence ~p~n",[{Presence,?MODULE,?LINE}]),
+     
+    Dark=zigbee_devices:call("lumi_motion_1",is_dark,[]),
+    io:format("Dark ~p~n",[{Dark,?MODULE,?LINE}]),
+
+    Daylight=zigbee_devices:call("lumi_motion_1",is_daylight,[]),
+    io:format("Daylight ~p~n",[{Daylight,?MODULE,?LINE}]),
+
+    LightLevel=zigbee_devices:call("lumi_motion_1",lightlevel,[]),
+    io:format("LightLevel ~p~n",[{LightLevel,?MODULE,?LINE}]),
+
+    Lux=zigbee_devices:call("lumi_motion_1",lux,[]),
+    io:format("Lux ~p~n",[{Lux,?MODULE,?LINE}]),
+     
+    
+    ok.
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_lumi_vibration()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    io:format("Doesnt work  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+    true=zigbee_devices:call("vib_1",is_reachable,[]),
+    HasVibrated=zigbee_devices:call("vib_1",has_vibrated,[]),
+    io:format("HasVibrated ~p~n",[{HasVibrated,?MODULE,?LINE}]),
+    
+    
+    ok.
+
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_tradfri_motion()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    io:format("Doesnt work  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+    true=zigbee_devices:call("tradfri_motion_1",is_reachable,[]),
+    Presence=zigbee_devices:call("tradfri_motion_1",is_presence,[]),
+    io:format("Presence ~p~n",[{Presence,?MODULE,?LINE}]),
+    Dark=zigbee_devices:call("tradfri_motion_1",is_dark,[]),
+    io:format("Dark ~p~n",[{Dark,?MODULE,?LINE}]),
+    
+    
+    ok.
+
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_lumi_magnetic()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+    io:format("Doesnt work  ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+
+    true=zigbee_devices:call("lumi_magnet_1",is_reachable,[]),
+    Open1=zigbee_devices:call("lumi_magnet_1",is_open,[]),
+    Closed1=zigbee_devices:call("lumi_magnet_1",is_closed,[]),
+    io:format("Open1,Closed1  ~p~n",[{Open1,Closed1,?MODULE,?LINE}]),
+    
+    
     ok.
 
 %% --------------------------------------------------------------------

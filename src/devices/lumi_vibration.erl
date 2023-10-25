@@ -4,39 +4,39 @@
 %%% 
 %%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(tradfri_motion).    
+-module(lumi_vibration).    
      
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--define(ModelId,"TRADFRI motion sensor").
+-define(ModelId,"lumi.vibration.aq1").
 -define(Type,"sensors").
 %% --------------------------------------------------------------------
-%"sensors","7",
-%          #{<<"config">> =>
-%                #{<<"alert">> => <<"none">>,<<"battery">> => 60,
- %                 <<"delay">> => 180,<<"duration">> => 60,
-  %                <<"group">> => <<"7">>,<<"on">> => true,
-   %               <<"reachable">> => true},
-%            <<"ep">> => 1,
-%            <<"etag">> => <<"4f13859576edf6f1d4121ae1e7807387">>,
-%            <<"lastannounced">> => <<"2023-11-02T18:13:57Z">>,
-%            <<"lastseen">> => <<"2023-11-02T19:39Z">>,
-%            <<"manufacturername">> => <<"IKEA of Sweden">>,
-%            <<"modelid">> => <<"TRADFRI motion sensor">>,
-%            <<"name">> => <<"tradfri_motion_1">>,
-%            <<"state">> =>
-%                #{<<"dark">> => true,
-%                  <<"lastupdated">> => <<"2023-11-02T19:39:41.175">>,
-%                  <<"presence">> => false},
-%            <<"swversion">> => <<"2.0.022">>,<<"type">> => <<"ZHAPresence">>,
-%            <<"uniqueid">> => <<"84:ba:20:ff:fe:9b:d6:4d-01-0006">>}},
+%{"sensors","12",
+%  #{<<"config">> =>
+%        #{<<"battery">> => 95,<<"on">> => true,<<"pending">> => [],
+%          <<"reachable">> => true,<<"sensitivity">> => 11,
+%          <<"sensitivitymax">> => 21,<<"temperature">> => 3000},
+%    <<"ep">> => 1,
+%    <<"etag">> => <<"ace3a3b79f76b555744d0d4abd062754">>,
+%    <<"lastannounced">> => null,
+%    <<"lastseen">> => <<"2023-11-02T20:31Z">>,
+%    <<"manufacturername">> => <<"LUMI">>,
+%    <<"modelid">> => <<"lumi.vibration.aq1">>,
+%    <<"name">> => <<"vib_1">>,
+%    <<"state">> =>
+%        #{<<"lastupdated">> => <<"2023-11-02T20:31:09.331">>,
+%          <<"orientation">> => [0,2,88],
+%          <<"tiltangle">> => 360,<<"vibration">> => true,
+%          <<"vibrationstrength">> => 4},
+%    <<"swversion">> => <<"20180130">>,
+%    <<"type">> => <<"ZHAVibration">>,
+%    <<"uniqueid">> => <<"00:15:8d:00:09:1b:4e:17-01-0101">>}},
 
 %% External exports
 -export([
 	 is_reachable/2,
-	 is_presence/2,
-	 is_dark/2
+	 has_vibrated/2
 	]). 
 
 
@@ -59,7 +59,7 @@ is_reachable([],[{_Type,_NumId,Map}|_])->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_presence([],[{_Type,_NumId,Map}|_])->
+has_vibrated([],[{_Type,_NumId,Map}|_])->
     ConfigMap=maps:get(<<"config">>,Map),
 %    io:format("ConfigMap  ~p~n",[{ConfigMap,?MODULE,?LINE}]),
     case maps:get(<<"reachable">>,ConfigMap) of
@@ -68,24 +68,7 @@ is_presence([],[{_Type,_NumId,Map}|_])->
 	true->
 	    StateMap=maps:get(<<"state">>,Map),
 %	    io:format("StateMap  ~p~n",[{StateMap,?MODULE,?LINE}]),
-	    maps:get(<<"presence">>,StateMap)
-    end.
-
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-is_dark([],[{_Type,_NumId,Map}|_])->
-    ConfigMap=maps:get(<<"config">>,Map),
-%    io:format("ConfigMap  ~p~n",[{ConfigMap,?MODULE,?LINE}]),
-    case maps:get(<<"reachable">>,ConfigMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    StateMap=maps:get(<<"state">>,Map),
-%	    io:format("StateMap  ~p~n",[{StateMap,?MODULE,?LINE}]),
-	    maps:get(<<"dark">>,StateMap)
+	    maps:get(<<"vibration">>,StateMap)
     end.
 
 %% ====================================================================

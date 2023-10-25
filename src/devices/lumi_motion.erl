@@ -9,36 +9,56 @@
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--define(ModelId,"lumi.sensor.motion.aq2").
+-define(ModelId,"lumi.sensor_motion.aq2").
 -define(Type,"sensors").
 %% --------------------------------------------------------------------
 %{"sensors","9",
-%           #{<<"config">> =>
-%                 #{<<"battery">> => 100,<<"on">> => true,
-%                   <<"reachable">> => true,<<"temperature">> => 2800,
-%                   <<"tholddark">> => 12000,<<"tholdoffset">> => 7000},
-%             <<"ep">> => 1,
-%             <<"etag">> => <<"96e94adf0c83344fd7ccfdc7b376f754">>,
-%             <<"lastannounced">> => <<"2022-12-20T20:22:40Z">>,
-%             <<"lastseen">> => <<"2023-11-01T19:45Z">>,
-%             <<"manufacturername">> => <<"LUMI">>,
-%             <<"modelid">> => <<"lumi.sensor_motion.aq2">>,
-%             <<"name">> => <<"lumi_motion_1">>,
-%             <<"state">> =>
-%                 #{<<"dark">> => true,<<"daylight">> => false,
-%                   <<"lastupdated">> => <<"2023-11-01T19:45:28.897">>,
-%                   <<"lightlevel">> => 6021,<<"lux">> => 4},
-%             <<"swversion">> => <<"20170627">>,
-%             <<"type">> => <<"ZHALightLevel">>,
- %            <<"uniqueid">> => <<"00:15:8d:00:01:dd:a2:b8-01-0400">>}},
+%  #{<<"config">> =>
+%        #{<<"battery">> => 100,<<"on">> => true,
+%          <<"reachable">> => true,<<"temperature">> => 3100,
+%          <<"tholddark">> => 12000,<<"tholdoffset">> => 7000},
+%    <<"ep">> => 1,
+%    <<"etag">> => <<"6ec620cea826db2766f084f1b27aa4a3">>,
+%    <<"lastannounced">> => <<"2022-12-20T20:22:40Z">>,
+%    <<"lastseen">> => <<"2023-11-02T21:01Z">>,
+%    <<"manufacturername">> => <<"LUMI">>,
+%    <<"modelid">> => <<"lumi.sensor_motion.aq2">>,
+%    <<"name">> => <<"lumi_motion_1">>,
+%    <<"state">> =>
+%        #{<<"dark">> => false,<<"daylight">> => true,
+%          <<"lastupdated">> => <<"2023-11-02T21:01:03.552">>,
+%          <<"lightlevel">> => 23839,<<"lux">> => 242},
+%    <<"swversion">> => <<"20170627">>,
+%    <<"type">> => <<"ZHALightLevel">>,
+%    <<"uniqueid">> => <<"00:15:8d:00:01:dd:a2:b8-01-0400">>}},
+
+
+%"sensors","10",
+%  #{<<"config">> =>
+%        #{<<"battery">> => 100,<<"duration">> => 90,<<"on">> => true,
+%          <<"reachable">> => true,<<"temperature">> => 3100},
+%    <<"ep">> => 1,
+%    <<"etag">> => <<"094a00153570739fb132675046491386">>,
+%    <<"lastannounced">> => <<"2022-12-20T20:22:40Z">>,
+%    <<"lastseen">> => <<"2023-11-02T21:01Z">>,
+%    <<"manufacturername">> => <<"LUMI">>,
+%    <<"modelid">> => <<"lumi.sensor_motion.aq2">>,
+%    <<"name">> => <<"lumi_motion_1">>,
+%    <<"state">> =>
+%        #{<<"lastupdated">> => <<"2023-11-02T21:01:03.560">>,
+%          <<"presence">> => true},
+%    <<"swversion">> => <<"20170627">>,...}},
+
 
 %% External exports
 -export([
 	 is_reachable/2,
-	 is_on/2,
-	 is_off/2,
-	 turn_on/2,
-	 turn_off/2
+	 is_presence/2,
+
+	 is_dark/2,
+	 is_daylight/2,
+	 lightlevel/2,
+	 lux/2
 	]). 
 
 
@@ -53,63 +73,60 @@
 %% Returns: non
 %% --------------------------------------------------------------------
 is_reachable([],[{_Type,_NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    maps:get(<<"reachable">>,StateMap).
+    ConfigMap=maps:get(<<"config">>,Map),
+    maps:get(<<"reachable">>,ConfigMap).
 	   
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_on([],[{_Type,_NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    maps:get(<<"on">>,StateMap)
-    end.
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-is_off([],ListTypeNumIdMap)->
-    false=:=is_on([],ListTypeNumIdMap).
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-turn_on([],[{_Type,NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=true,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
-    end.
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-turn_off([],[{_Type,NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=false,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
-    end.
+is_presence([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"presence">>,StateMap)||StateMap<-StateMaps,
+						   true=:=maps:is_key(<<"presence">>,StateMap)],
+    Raw.
+
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+is_dark([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"dark">>,StateMap)||StateMap<-StateMaps,
+					  true=:=maps:is_key(<<"dark">>,StateMap)],
+    Raw.
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+is_daylight([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"daylight">>,StateMap)||StateMap<-StateMaps,
+					  true=:=maps:is_key(<<"daylight">>,StateMap)],
+    Raw.
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+lightlevel([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"lightlevel">>,StateMap)||StateMap<-StateMaps,
+					  true=:=maps:is_key(<<"lightlevel">>,StateMap)],
+    Raw.
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+lux([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"lux">>,StateMap)||StateMap<-StateMaps,
+					  true=:=maps:is_key(<<"lux">>,StateMap)],
+    Raw.
 
 
 %% ====================================================================

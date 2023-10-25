@@ -36,11 +36,34 @@ get_num_map_module(Name)->
 	ListTypeNumIdMap->
 	[{Type,NumId,Map}|_]=ListTypeNumIdMap,
 	    ModelId=binary_to_list(maps:get(<<"modelid">>,Map)),
-	    [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
-						  ModelId=:=maps:get(modelid,DeviceMap)],
-	    {ok,Module,ListTypeNumIdMap}
-			       
+	   % [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
+	    ModuleInList=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
+						      ModelId=:=maps:get(modelid,DeviceMap)],
+	 %   ModuleInList=test_get_module(?DeviceInfo,ModelId,false,na),
+	    case ModuleInList of
+		[]->
+		    {error,["Module not identfied Name,ModelId,Type,NumId,Map ",Name,ModelId,Type,NumId,Map]};
+		[Module]->
+		    {ok,Module,ListTypeNumIdMap}
+	    end
     end.
+
+test_get_module([],ModelId,false,_Module)->
+    {error,["Not found ",ModelId]};
+test_get_module(_,_ModelId,true,Module)->
+    Module;
+test_get_module([DeviceMap|T],ModelId,false,_)->
+    io:format("ModelId,  DeviceMap ~p~n",[{ModelId,DeviceMap,?MODULE,?LINE}]),
+    case ModelId=:=maps:get(modelid,DeviceMap) of
+	true->
+	    Found=true,
+	    Module=[maps:get(module,DeviceMap)];
+	false ->
+	    Found=false,
+	    Module=na
+    end,
+    io:format("Found, Module ~p~n",[{Found, Module,?MODULE,?LINE}]),
+    test_get_module(T,ModelId,Found,Module).
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec

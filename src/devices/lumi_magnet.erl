@@ -4,12 +4,12 @@
 %%% 
 %%% Created : 10 dec 2012
 %%% -------------------------------------------------------------------
--module(lumi_magnetic).    
+-module(lumi_magnet).    
      
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
--define(ModelId,"lumi.sensor.magnetic.aq2").
+-define(ModelId,"lumi.sensor_magnet.aq2").
 -define(Type,"sensors").
 %% --------------------------------------------------------------------
 %  {"sensors","8",
@@ -34,10 +34,8 @@
 %% External exports
 -export([
 	 is_reachable/2,
-	 is_on/2,
-	 is_off/2,
-	 turn_on/2,
-	 turn_off/2
+	 is_open/2,
+	 is_closed/2
 	]). 
 
 
@@ -52,64 +50,32 @@
 %% Returns: non
 %% --------------------------------------------------------------------
 is_reachable([],[{_Type,_NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    maps:get(<<"reachable">>,StateMap).
+    ConfigMap=maps:get(<<"config">>,Map),
+    maps:get(<<"reachable">>,ConfigMap).
 	   
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_on([],[{_Type,_NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
+is_open([],[{_Type,_NumId,Map}|_])->
+    ConfigMap=maps:get(<<"config">>,Map),
+    io:format("ConfigMap  ~p~n",[{ConfigMap,?MODULE,?LINE}]),
+    case maps:get(<<"reachable">>,ConfigMap) of
 	false->
 	    {error,["Not reachable",?MODULE,?LINE]};
 	true->
-	    maps:get(<<"on">>,StateMap)
+	    StateMap=maps:get(<<"state">>,Map),
+	    io:format("StateMap  ~p~n",[{StateMap,?MODULE,?LINE}]),
+	    maps:get(<<"open">>,StateMap)
     end.
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-is_off([],ListTypeNumIdMap)->
-    false=:=is_on([],ListTypeNumIdMap).
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-turn_on([],[{_Type,NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=true,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
-    end.
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-turn_off([],[{_Type,NumId,Map}|_])->
-    StateMap=maps:get(<<"state">>,Map),
-    case maps:get(<<"reachable">>,StateMap) of
-	false->
-	    {error,["Not reachable",?MODULE,?LINE]};
-	true->
-	    Id=NumId,
-	    Key=list_to_binary("on"),
-	    Value=false,
-	    DeviceType=?Type,
-	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
-    end.
-
+is_closed([],ListTypeNumIdMap)->
+    false=:=is_open([],ListTypeNumIdMap).
 
 %% ====================================================================
 %% Internal functions
