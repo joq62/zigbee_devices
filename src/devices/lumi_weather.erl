@@ -67,10 +67,10 @@
 
 %% External exports
 -export([
-	 is_reachable/1,
-	 temp/1,
-	 humidity/1,
-	 pressure/1
+	 is_reachable/2,
+	 temp/2,
+	 humidity/2,
+	 pressure/2
 	]). 
 
 
@@ -82,30 +82,22 @@
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-is_reachable(Name)->
-    case get_info(Name) of
-	[]->
-	    {error,["Name not found",Name,?MODULE,?LINE]};
-	[{?Type,_NumId,Map}|_]->
-	    ConfigMap=maps:get(<<"config">>,Map),
-	    maps:get(<<"reachable">>,ConfigMap)
-    end.
+is_reachable([],[{_Type,_NumId,Map}|_])->
+    ConfigMap=maps:get(<<"config">>,Map),
+    maps:get(<<"reachable">>,ConfigMap).
+	   
+	  
     
 %% --------------------------------------------------------------------
 %% Function:start/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-temp(Name)->
-    case get_info(Name) of
-	[]->
-	    {error,["Name not found",Name,?MODULE,?LINE]};
-	ListTypeNumMap->
-	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
-	    [Raw]=[maps:get(<<"temperature">>,StateMap)||StateMap<-StateMaps,
-							     true=:=maps:is_key(<<"temperature">>,StateMap)],
-	    Raw/100
-    end.
+temp([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"temperature">>,StateMap)||StateMap<-StateMaps,
+						 true=:=maps:is_key(<<"temperature">>,StateMap)],
+    Raw/100.
 							     
 							     
 %% --------------------------------------------------------------------
@@ -113,16 +105,11 @@ temp(Name)->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-humidity(Name)->
-    case get_info(Name) of
-	[]->
-	    {error,["Name not found",Name,?MODULE,?LINE]};
-	ListTypeNumMap->
-	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
-	    [Raw]=[maps:get(<<"humidity">>,StateMap)||StateMap<-StateMaps,
-							     true=:=maps:is_key(<<"humidity">>,StateMap)],
-	    Raw/100
-    end.
+humidity([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"humidity">>,StateMap)||StateMap<-StateMaps,
+					      true=:=maps:is_key(<<"humidity">>,StateMap)],
+    Raw/100.
 							     
 							     
 %% --------------------------------------------------------------------
@@ -130,24 +117,14 @@ humidity(Name)->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-pressure(Name)->
-    case get_info(Name) of
-	[]->
-	    {error,["Name not found",Name,?MODULE,?LINE]};
-	ListTypeNumMap->
-	    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumMap],
-	    [Raw]=[maps:get(<<"pressure">>,StateMap)||StateMap<-StateMaps,
-							     true=:=maps:is_key(<<"pressure">>,StateMap)],
-	    Raw
-    end.
-	
+pressure([],ListTypeNumIdMap)->
+    StateMaps=[maps:get(<<"state">>,Map)||{_,_,Map}<-ListTypeNumIdMap],
+    [Raw]=[maps:get(<<"pressure">>,StateMap)||StateMap<-StateMaps,
+					      true=:=maps:is_key(<<"pressure">>,StateMap)],
+    Raw.
+
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-get_info(Name)->
-    Result= [{?Type,NumId,Map}||{?Type,NumId,Map}<-zigbee_devices:all_raw(),
-				Name=:=binary_to_list(maps:get(<<"name">>,Map)),
-				?ModelId=:=binary_to_list(maps:get(<<"modelid">>,Map))],
-    Result.

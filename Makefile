@@ -1,5 +1,5 @@
 all:
-	rm -rf  *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
+	rm -rf  *~ */*~ */*/*~ src/devices/*.beam src/*.beam test/*.beam test_ebin erl_cra*;
 	rm -rf *_a;
 	rm -rf *.dir;
 	rm -rf _build;
@@ -25,7 +25,7 @@ build:
 	cp _build/default/lib/*/ebin/* ebin;
 	rm -rf _build test_ebin;
 clean:
-	rm -rf  *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
+	rm -rf  */*/*~ src/devices/*.beam *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
 	rm -rf *_a;
 	rm -rf _build;
 	rm -rf ebin
@@ -34,7 +34,7 @@ clean:
 
 eunit:
 #	Standard
-	rm -rf  *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
+	rm -rf  */*/*~ src/devices/*.beam *~ */*~ src/*.beam test/*.beam test_ebin erl_cra*;
 	rm -rf *_a;
 	rm -rf *.dir;
 	rm -rf _build;

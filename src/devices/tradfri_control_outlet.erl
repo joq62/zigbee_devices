@@ -30,11 +30,11 @@
 
 %% External exports
 -export([
-	 is_reachable/3,
-	 is_on/3,
-	 is_off/3,
-	 turn_on/3,
-	 turn_off/3
+	 is_reachable/2,
+	 is_on/2,
+	 is_off/2,
+	 turn_on/2,
+	 turn_off/2
 	]). 
 
 
@@ -44,11 +44,11 @@
 
 
 %% --------------------------------------------------------------------
-%% Function:start/0 
+%% Function:start{/0 
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_reachable([],_NumId,Map)->
+is_reachable([],[{_Type,_NumId,Map}|_])->
     StateMap=maps:get(<<"state">>,Map),
     maps:get(<<"reachable">>,StateMap).
 	   
@@ -57,7 +57,7 @@ is_reachable([],_NumId,Map)->
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-is_on([],_NumId,Map)->
+is_on([],[{_Type,_NumId,Map}|_])->
     StateMap=maps:get(<<"state">>,Map),
     case maps:get(<<"reachable">>,StateMap) of
 	false->
@@ -70,14 +70,14 @@ is_on([],_NumId,Map)->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-is_off([],NumId,Map)->
-    false=:=is_on([],NumId,Map).
+is_off([],ListTypeNumIdMap)->
+    false=:=is_on([],ListTypeNumIdMap).
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-turn_on([],NumId,Map)->
+turn_on([],[{_Type,NumId,Map}|_])->
     StateMap=maps:get(<<"state">>,Map),
     case maps:get(<<"reachable">>,StateMap) of
 	false->
@@ -94,7 +94,7 @@ turn_on([],NumId,Map)->
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
-turn_off([],NumId,Map)->
+turn_off([],[{_Type,NumId,Map}|_])->
     StateMap=maps:get(<<"state">>,Map),
     case maps:get(<<"reachable">>,StateMap) of
 	false->

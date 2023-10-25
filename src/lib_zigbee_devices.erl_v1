@@ -33,12 +33,11 @@ get_num_map_module(Name)->
     case TYpeNumIdMapList of
 	[]->
 	    {error,["Name not found",Name,?MODULE,?LINE]};
-	ListTypeNumIdMap->
-	[{Type,NumId,Map}|_]=ListTypeNumIdMap,
+	[{Type,NumId,Map}|_]->
 	    ModelId=binary_to_list(maps:get(<<"modelid">>,Map)),
 	    [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
 						  ModelId=:=maps:get(modelid,DeviceMap)],
-	    {ok,Module,ListTypeNumIdMap}
+	    {ok,Type,NumId,Map,Module}
 			       
     end.
 %%--------------------------------------------------------------------

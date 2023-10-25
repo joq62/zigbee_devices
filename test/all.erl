@@ -37,9 +37,10 @@ start()->
     ok=setup(),
     ok=test1(),
     ok=test2(),
-  %  ok=test_tradfri_bulb_e27_cws_806lm(),
-    ok=test_tradfri_control_outlet(),
-  %  ok=test_lumi_weather(),
+    ok=test_tradfri_control_outlet(), 
+    ok=test_tradfri_bulb_e27_cws_806lm(),
+    ok=test_lumi_weather(),
+    ok=test_tradfri_bulb_E14_ws_candleopal_470lm(),
    
     io:format("Test OK !!! ~p~n",[?MODULE]),
     timer:sleep(2000),
@@ -75,21 +76,68 @@ test2()->
 %% --------------------------------------------------------------------
 test_tradfri_bulb_e27_cws_806lm()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-   {200,_,_}=tradfri_bulb_e27_cws_806lm:turn_on("lamp_1"),
+    
+    {200,_,_}=zigbee_devices:call("lamp_1",turn_on,[]),
     timer:sleep(200),
-    true=tradfri_bulb_e27_cws_806lm:is_reachable("lamp_1"),
-    false=tradfri_bulb_e27_cws_806lm:is_off("lamp_1"),
-    true=tradfri_bulb_e27_cws_806lm:is_on("lamp_1"),
+    true=zigbee_devices:call("lamp_1",is_reachable,[]),
+    false=zigbee_devices:call("lamp_1",is_off,[]),
+    true=zigbee_devices:call("lamp_1",is_on,[]),
 
-    {200,_,_}=tradfri_bulb_e27_cws_806lm:turn_off("lamp_1"),
-    timer:sleep(2000),
-    true=tradfri_bulb_e27_cws_806lm:is_off("lamp_1"),
-    false=tradfri_bulb_e27_cws_806lm:is_on("lamp_1"),
-    
-    
+    {200,_,_}={200,_,_}=zigbee_devices:call("lamp_1",turn_off,[]),
+    timer:sleep(200),   
+   
+    true=zigbee_devices:call("lamp_1",is_off,[]),
+    false=zigbee_devices:call("lamp_1",is_on,[]),
+   
 
-    
+    ok.
+%% --------------------------------------------------------------------
+%% Function: available_hosts()
+%% Description: Based on hosts.config file checks which hosts are avaible
+%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
+%% --------------------------------------------------------------------
+test_tradfri_bulb_E14_ws_candleopal_470lm()->
+    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
+  
+    true=zigbee_devices:call("hall_7_8",is_reachable,[]),
 
+    case zigbee_devices:call("hall_7_8",is_on,[]) of
+	false->
+	    InitState=off,
+	    {200,_,_}=zigbee_devices:call("hall_7_8",turn_on,[]);
+	true->
+	    InitState=on
+    end,
+   % timer:sleep(200),
+    true=zigbee_devices:call("hall_7_8",is_reachable,[]),
+    false=zigbee_devices:call("hall_7_8",is_off,[]),
+    true=zigbee_devices:call("hall_7_8",is_on,[]),
+    InitBri=zigbee_devices:call("hall_7_8",get_bri,[]),
+    
+    io:format("InitBri ~p~n",[{InitBri,?MODULE,?LINE}]),
+    
+    TestBri=InitBri+10,
+    {200,_,_}=zigbee_devices:call("hall_7_8",set_bri,[TestBri]),
+    TestBri=zigbee_devices:call("hall_7_8",get_bri,[]),
+    timer:sleep(200),
+    {200,_,_}=zigbee_devices:call("hall_7_8",turn_off,[]),
+    true=zigbee_devices:call("hall_7_8",is_off,[]),
+    false=zigbee_devices:call("hall_7_8",is_on,[]),
+
+    case InitState of
+	on->
+	    {200,_,_}=zigbee_devices:call("hall_7_8",turn_on,[]),
+	    {200,_,_}=zigbee_devices:call("hall_7_8",set_bri,[InitBri]),
+	    true=zigbee_devices:call("hall_7_8",is_on,[]),
+	    InitBri=zigbee_devices:call("hall_7_8",get_bri,[]);
+	off->
+	    {200,_,_}=zigbee_devices:call("hall_7_8",turn_on,[]),
+	    {200,_,_}=zigbee_devices:call("hall_7_8",set_bri,[InitBri]),
+	    true=zigbee_devices:call("hall_7_8",is_on,[]),
+	    InitBri=zigbee_devices:call("hall_7_8",get_bri,[]),
+	    {200,_,_}=zigbee_devices:call("hall_7_8",turn_off,[]),
+	    false=zigbee_devices:call("hall_7_8",is_on,[])
+    end,
     ok.
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -99,7 +147,7 @@ test_tradfri_bulb_e27_cws_806lm()->
 test_tradfri_control_outlet()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
-   {200,_,_}=zigbee_devices:call("outlet_1",turn_on,[]),
+    {200,_,_}=zigbee_devices:call("outlet_1",turn_on,[]),
     timer:sleep(200),
     true=zigbee_devices:call("outlet_1",is_reachable,[]),
     false=zigbee_devices:call("outlet_1",is_off,[]),
@@ -120,12 +168,15 @@ test_tradfri_control_outlet()->
 test_lumi_weather()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
 
-    true=lumi_weather:is_reachable("weather_1"),
-    Temp=lumi_weather:temp("weather_1"),
+
+    true=zigbee_devices:call("weather_1",is_reachable,[]),
+
+   
+    Temp=zigbee_devices:call("weather_1",temp,[]),
     io:format("Temp ~p~n",[{Temp,?MODULE,?LINE}]),
-    Humidity=lumi_weather:humidity("weather_1"),
+    Humidity=zigbee_devices:call("weather_1",humidity,[]),
     io:format("Humidity ~p~n",[{Humidity,?MODULE,?LINE}]),
-    Pressure=lumi_weather:pressure("weather_1"),
+    Pressure=zigbee_devices:call("weather_1",pressure,[]),
     io:format("Pressure ~p~n",[{Pressure,?MODULE,?LINE}]),
     
     ok.

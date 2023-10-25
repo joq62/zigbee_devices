@@ -217,15 +217,15 @@ init([]) ->
 
 
 handle_call({call,Name,Function, Args}, _From, State) ->
-    io:format(" ~p~n",[{?MODULE,?LINE}]),
+    
     Reply=case rpc:call(node(),lib_zigbee_devices,get_num_map_module,[Name],5000) of
 	      {badrpc,Reason}->
 		  {error,["badrpc ",Reason,?MODULE,?LINE]};
 	     {error,Reason}->
 		 {error,Reason};
-	     {ok,_Type,NumId,Map,Module}->
-		  io:format(" NumId,Map,Module ~p~n",[{Module,NumId,Map,?MODULE,?LINE}]),
-		 rpc:call(node(),Module,Function,[Args,NumId,Map],5000)
+	     {ok,Module,ListTypeNumIdMap}->
+	%	  io:format(" NumId,Map,Module ~p~n",[{Module,ListTypeNumIdMap,?MODULE,?LINE}]),
+		 rpc:call(node(),Module,Function,[Args,ListTypeNumIdMap],5000)
 	 end,
     {reply, Reply, State};
 

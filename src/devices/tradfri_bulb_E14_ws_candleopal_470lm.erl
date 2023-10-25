@@ -12,23 +12,36 @@
 -define(ModelId,"TRADFRIbulbE14WScandleopal470lm").
 -define(Type,"lights").
 %% --------------------------------------------------------------------
-%   {"TRADFRI bulb E27 WW 806lm",
-%     "2",
-%         #{<<"alert">> => <<"none">>,
-%           <<"bri">> => 0,
-%           <<"on">> => false,
-%           <<"reachable">> => false}},
+% {"lights","12",
+%           #{<<"colorcapabilities">> => 0,<<"ctmax">> => 65279,
+%             <<"ctmin">> => 0,
+%             <<"etag">> => <<"9b019a96bf9573334ac69559158ccfaf">>,
+%             <<"hascolor">> => true,
+%             <<"lastannounced">> => <<"2023-10-18T18:55:51Z">>,
+%             <<"lastseen">> => <<"2023-11-01T19:47Z">>,
+%             <<"manufacturername">> => <<"IKEA of Sweden">>,
+%             <<"modelid">> => <<"TRADFRIbulbE14WScandleopal470lm">>,
+%             <<"name">> => <<"hall_1_of_8">>,
+%             <<"state">> =>
+%                 #{<<"alert">> => <<"none">>,<<"bri">> => 98,
+%                   <<"colormode">> => <<"ct">>,<<"ct">> => 454,
+%                   <<"on">> => true,<<"reachable">> => true},
+%             <<"swversion">> => <<"1.0.032">>,
+%             <<"type">> => <<"Color temperature light">>,
+%             <<"uniqueid">> => <<"a4:9e:69:ff:fe:1b:b1:af-01">>}},
 
 
 
 
 %% External exports
 -export([
-	 is_on/1,
-	 set/2,
-	 get_bri/1,
-	 set_bri/2,
-	 reachable/1
+	 is_reachable/2,
+	 is_on/2,
+	 is_off/2,
+	 turn_on/2,
+	 turn_off/2,
+	 get_bri/2,
+	 set_bri/2
 	 
 	]). 
 
@@ -36,6 +49,93 @@
 %% ====================================================================
 %% External functions
 %% ====================================================================
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+is_reachable([],[{_Type,_NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    maps:get(<<"reachable">>,StateMap).
+	   
+	   
+%% --------------------------------------------------------------------
+%% Function:start/0 
+%% Description: Initiate the eunit tests, set upp needed processes etc
+%% Returns: non
+%% --------------------------------------------------------------------
+is_on([],[{_Type,_NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    case maps:get(<<"reachable">>,StateMap) of
+	false->
+	    {error,["Not reachable",?MODULE,?LINE]};
+	true->
+	    maps:get(<<"on">>,StateMap)
+    end.
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+is_off([],ListTypeNumIdMap)->
+    false=:=is_on([],ListTypeNumIdMap).
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+turn_on([],[{_Type,NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    case maps:get(<<"reachable">>,StateMap) of
+	false->
+	    {error,["Not reachable",?MODULE,?LINE]};
+	true->
+	    Id=NumId,
+	    Key=list_to_binary("on"),
+	    Value=true,
+	    DeviceType=?Type,
+	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+    end.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+turn_off([],[{_Type,NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    case maps:get(<<"reachable">>,StateMap) of
+	false->
+	    {error,["Not reachable",?MODULE,?LINE]};
+	true->
+	    Id=NumId,
+	    Key=list_to_binary("on"),
+	    Value=false,
+	    DeviceType=?Type,
+	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+    end.
+
+
+
+%%--------------------------------------------------------------------
+%% @doc
+%% @spec
+%% @end
+%%--------------------------------------------------------------------
+get_bri([],[{_Type,_NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    case maps:get(<<"reachable">>,StateMap) of
+	false->
+	    {error,["Not reachable",?MODULE,?LINE]};
+	true->
+	    maps:get(<<"bri">>,StateMap)
+    end.
 
 
 %% --------------------------------------------------------------------
@@ -43,71 +143,15 @@
 %% Description: Initiate the eunit tests, set upp needed processes etc
 %% Returns: non
 %% --------------------------------------------------------------------
-set(Name,State)->
-    {ok,[{_Name,NumId,_ModelId,_StateMap}]}=lib_conbee:device(?Type,Name),
-    {ok,ConbeeAddr}=application:get_env(conbee_rel,addr),
-    {ok,ConbeePort}=application:get_env(conbee_rel,port),
-    {ok,Crypto}=application:get_env(conbee_rel,key),
-
-    Cmd="/api/"++Crypto++"/"++?Type++"/"++NumId++"/state",
-    Body=case State of
-	     "on"->
-		 jsx:encode(#{<<"on">> => true});		   
-	     "off"->
-		 jsx:encode(#{<<"on">> => false})
-	 end,
-    {ok, ConnPid} = gun:open(ConbeeAddr,ConbeePort),
-    StreamRef = gun:put(ConnPid, Cmd, 
-			[{<<"content-type">>, "application/json"}],Body),
-    Result=lib_conbee:get_reply(ConnPid,StreamRef),
-    ok=gun:close(ConnPid),
-    Result.
-
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-get_bri(Name)->
-    {ok,[{_Name,_NumId,_ModelId,StateMap}]}=lib_conbee:device(?Type,Name),
-     maps:get(<<"bri">>,StateMap).
-
-
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-set_bri(Name,Brightness)->
-    {ok,[{_Name,NumId,_ModelId,_StateMap}]}=lib_conbee:device(?Type,Name),
-  
-    {ok,ConbeeAddr}=application:get_env(conbee_rel,addr),
-    {ok,ConbeePort}=application:get_env(conbee_rel,port),
-    {ok,Crypto}=application:get_env(conbee_rel,key),
-
-    Cmd="/api/"++Crypto++"/"++?Type++"/"++NumId++"/state",
-    Body=jsx:encode(#{<<"bri">> => Brightness}),	      
-    {ok, ConnPid} = gun:open(ConbeeAddr,ConbeePort),
-    StreamRef = gun:put(ConnPid, Cmd, 
-			[{<<"content-type">>, "application/json"}],Body),
-    Result=lib_conbee:get_reply(ConnPid,StreamRef),
-    ok=gun:close(ConnPid),
-    Result.
-
-
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-is_on(Name)->
-    {ok,[{_Name,_NumId,_ModelId,StateMap}]}=lib_conbee:device(?Type,Name),
-    maps:get(<<"on">>,StateMap).
-%% --------------------------------------------------------------------
-%% Function:start/0 
-%% Description: Initiate the eunit tests, set upp needed processes etc
-%% Returns: non
-%% --------------------------------------------------------------------
-reachable(Name)->
-    {ok,[{_Name,_NumId,_ModelId,StateMap}]}=lib_conbee:device(?Type,Name),
-     maps:get(<<"reachable">>,StateMap).
+set_bri([Bri],[{_Type,NumId,Map}|_])->
+    StateMap=maps:get(<<"state">>,Map),
+    case maps:get(<<"reachable">>,StateMap) of
+	false->
+	    {error,["Not reachable",?MODULE,?LINE]};
+	true->
+	    Id=NumId,
+	    Key=list_to_binary("bri"),
+	    Value=Bri,
+	    DeviceType=?Type,
+	    rd:call(phoscon_control,set_state,[Id,Key,Value,DeviceType],5000)
+    end.
