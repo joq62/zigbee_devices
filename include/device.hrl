@@ -1,7 +1,8 @@
 % [{model_id, },{device_type,"sensors"}].
 % [{model_id, },{device_type,"lights"}].
 -define(DeviceInfo,
-	[#{modelid=>"lumi.sensor.motion.aq2",device_type=>"sensors",module=>lumi_sensor_motion_aq2},
+	[#{modelid=>"lumi.sensor.motion.aq2",device_type=>"sensors",module=>lumi_motion},
+	 #{modelid=>"lumi.sensor.magnetic.aq2",device_type=>"sensors",module=>lumi_magnetic},
 	 #{modelid=>"lumi.weather",device_type=>"sensors",module=>lumi_weather},
 	 #{modelid=>"TRADFRI on/off switch",device_type=>"sensors" ,module=>tradfri_on_off_switch},
 	 #{modelid=>"TRADFRI motion sensor",device_type=>"sensors",module=>tradfri_motion },
