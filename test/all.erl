@@ -27,17 +27,21 @@
 start()->
 
     pong=net_adm:ping(?ControlC201),
+
     ok=dependent_apps:start(),
     ok=setup(),
-    io:format("All_resources() ~p~n",[{rd:get_all_resources(),?MODULE,?LINE}]),
 
-   % ok=test_tradfri_control_outlet(), 
-  %  ok=test_tradfri_bulb_e27_cws_806lm(),
-  %  ok=test_lumi_weather(),
-  %  ok=test_tradfri_bulb_E14_ws_candleopal_470lm(),
-  %  ok=test_lumi_motion(),
-  %  ok=test_lumi_vibration(),
-  %  ok=test_tradfri_motion(),
+    io:format("Local ~p~n",[{rd_store:get_local_resource_tuples(),?MODULE,?LINE}]),
+    io:format("rd_store all_resources() ~p~n",[{rd_store:get_all_resources(),?MODULE,?LINE}]),
+    io:format("get_all_resources() ~p~n",[{rd:get_all_resources(),?MODULE,?LINE}]),
+
+    ok=test_tradfri_control_outlet(), 
+    ok=test_tradfri_bulb_e27_cws_806lm(),
+    ok=test_lumi_weather(),
+    ok=test_tradfri_bulb_E14_ws_candleopal_470lm(),
+    ok=test_lumi_motion(),
+    ok=test_lumi_vibration(),
+%    ok=test_tradfri_motion(),
 %    ok=test_lumi_magnetic(),
  %   ok=test1(),
  %   ok=test2(),
@@ -47,7 +51,7 @@ start()->
 
     io:format("Test OK !!! ~p~n",[?MODULE]),
     timer:sleep(3000),
-   % init:stop(),
+    init:stop(),
     ok.
 
 
