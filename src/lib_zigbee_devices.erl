@@ -28,23 +28,28 @@
 %% @end
 %%--------------------------------------------------------------------
 get_num_map_module(Name)->
-    TYpeNumIdMapList= [{Type,NumId,Map}||{Type,NumId,Map}<-all_raw(),
-					 Name=:=binary_to_list(maps:get(<<"name">>,Map))],
-    case TYpeNumIdMapList of
-	[]->
-	    {error,["Name not found",Name,?MODULE,?LINE]};
-	ListTypeNumIdMap->
-	[{Type,NumId,Map}|_]=ListTypeNumIdMap,
-	    ModelId=binary_to_list(maps:get(<<"modelid">>,Map)),
-	   % [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
-	    ModuleInList=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
-						      ModelId=:=maps:get(modelid,DeviceMap)],
-	 %   ModuleInList=test_get_module(?DeviceInfo,ModelId,false,na),
-	    case ModuleInList of
+    case all_raw() of
+	{error,Reason}->
+	    {error,["No Maps available ,Name, Reason",Name, Reason, ?MODULE,?LINE]};
+	AllMaps->
+	    TYpeNumIdMapList= [{Type,NumId,Map}||{Type,NumId,Map}<-AllMaps,
+						 Name=:=binary_to_list(maps:get(<<"name">>,Map))],
+	    case TYpeNumIdMapList of
 		[]->
-		    {error,["Module not identfied Name,ModelId,Type,NumId,Map ",Name,ModelId,Type,NumId,Map]};
-		[Module]->
-		    {ok,Module,ListTypeNumIdMap}
+		    {error,["Name not found",Name,?MODULE,?LINE]};
+		ListTypeNumIdMap->
+		    [{Type,NumId,Map}|_]=ListTypeNumIdMap,
+		    ModelId=binary_to_list(maps:get(<<"modelid">>,Map)),
+						% [Module]=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
+		    ModuleInList=[maps:get(module,DeviceMap)||DeviceMap<-?DeviceInfo,
+							      ModelId=:=maps:get(modelid,DeviceMap)],
+						%   ModuleInList=test_get_module(?DeviceInfo,ModelId,false,na),
+		    case ModuleInList of
+			[]->
+			    {error,["Module not identfied Name,ModelId,Type,NumId,Map ",Name,ModelId,Type,NumId,Map]};
+			[Module]->
+			    {ok,Module,ListTypeNumIdMap}
+		    end
 	    end
     end.
 

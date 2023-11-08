@@ -12,12 +12,20 @@
 -module(all).      
  
 -export([start/0]).
-
 %% --------------------------------------------------------------------
 %% Include files
 %% --------------------------------------------------------------------
 
--define(ControlC201,control_a@c201).
+
+-define(MainLogDir,"logs").
+-define(LocalLogDir,"to_be_changed.logs").
+-define(LogFile,"logfile").
+-define(MaxNumFiles,10).
+-define(MaxNumBytes,100000).
+
+
+-define(InfraSpecId,"basic"). 
+
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -25,46 +33,25 @@
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
 start()->
-
-    pong=net_adm:ping(?ControlC201),
-    ok=dependent_apps:start(),
+   
     ok=setup(),
-    io:format("All_resources() ~p~n",[{rd:get_all_resources(),?MODULE,?LINE}]),
 
-   % ok=test_tradfri_control_outlet(), 
-  %  ok=test_tradfri_bulb_e27_cws_806lm(),
-  %  ok=test_lumi_weather(),
-  %  ok=test_tradfri_bulb_E14_ws_candleopal_470lm(),
-  %  ok=test_lumi_motion(),
-  %  ok=test_lumi_vibration(),
-  %  ok=test_tradfri_motion(),
+    ok=test_lumi_motion(),
+    ok=test_lumi_vibration(),
+    ok=test_tradfri_motion(),
 %    ok=test_lumi_magnetic(),
  %   ok=test1(),
  %   ok=test2(),
-
- 
-
-
+    ok=test_tradfri_control_outlet(), 
+    ok=test_tradfri_bulb_e27_cws_806lm(),
+    ok=test_lumi_weather(),
+    ok=test_tradfri_bulb_E14_ws_candleopal_470lm(),
+   
     io:format("Test OK !!! ~p~n",[?MODULE]),
-    timer:sleep(3000),
-   % init:stop(),
+    timer:sleep(2000),
+%    init:stop(),
     ok.
 
-
-%% --------------------------------------------------------------------
-%% Function: available_hosts()
-%% Description: Based on hosts.config file checks which hosts are avaible
-%% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
-%% --------------------------------------------------------------------
-test_rd()->
-    io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-
-
- 
-    glurk= rd:get_all_resources(),
-    pong=rd:call(phoscon_control,ping,[],5000),
-    
-    ok.
 
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
@@ -281,15 +268,37 @@ test_lumi_weather()->
     ok.
 
     
-
 %% --------------------------------------------------------------------
 %% Function: available_hosts()
 %% Description: Based on hosts.config file checks which hosts are avaible
 %% Returns: List({HostId,Ip,SshPort,Uid,Pwd}
 %% --------------------------------------------------------------------
+
+
 setup()->
     io:format("Start ~p~n",[{?MODULE,?FUNCTION_NAME}]),
-  
+
+    file:del_dir_r(?MainLogDir),
+    ok=application:start(log),
+    pong=log:ping(),
+    LocalLogDir=atom_to_list(node())++".logs",
+    ok=log:create_logger(?MainLogDir,LocalLogDir,?LogFile,?MaxNumFiles,?MaxNumBytes),
+    
+    ok=application:start(rd),
+    pong=rd:ping(),
+    
+    ok=application:start(etcd),
+    pong=etcd:ping(),
+    
+    %% connect to control_nodes
+    ThisNode=node(),
+    {ok,ConnecNodes}=etcd_infra:get_connect_nodes(?InfraSpecId),
+    ConnectR=[{net_adm:ping(N),N}||N<-ConnecNodes],
+    io:format("ConnectR ~p~n",[{ConnectR,?MODULE,?FUNCTION_NAME}]),
+
     ok=application:start(zigbee_devices),
     pong=zigbee_devices:ping(),
+    
+    
+
     ok.
