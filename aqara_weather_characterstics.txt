@@ -1,0 +1,3 @@
+f the temperature, humidity, and atmospheric pressure vary only a bit, data will be reported once an hour.
+
+​If the temperature variation exceeds 0.5℃ (1℉), the humidity variation exceeds 6% and the atmospheric pressure is no less than 25hPa, data will be reported instantly.

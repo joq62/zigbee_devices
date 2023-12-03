@@ -136,7 +136,7 @@ present() ->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% @spec
+%%  
 %% @end
 %%--------------------------------------------------------------------
 start()->
@@ -158,15 +158,7 @@ start_link() ->
 %%%===================================================================
 %%--------------------------------------------------------------------
 %% @doc
-%% @spec
-%% @end
-%%--------------------------------------------------------------------
-
-
-
-%%--------------------------------------------------------------------
-%% @doc
-%% @spec
+%%  
 %% @end
 %%--------------------------------------------------------------------
 ping()-> 
@@ -197,9 +189,12 @@ init([]) ->
     
 
     ?LOG_NOTICE("Server started ",[]),
-    
+    TimeOut=0,
  
-    {ok, #state{}}.
+    {ok, #state{
+	   
+	   },
+     TimeOut=0}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -253,8 +248,8 @@ handle_call({ping}, _From, State) ->
     Reply = pong,
     {reply, Reply, State};
 
-handle_call(_Request, _From, State) ->
-    Reply = ok,
+handle_call(Request, _From, State) ->
+    Reply = {error,["Unmatched signal ",Request,?MODULE,?LINE]},
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -268,6 +263,11 @@ handle_call(_Request, _From, State) ->
 	  {noreply, NewState :: term(), Timeout :: timeout()} |
 	  {noreply, NewState :: term(), hibernate} |
 	  {stop, Reason :: term(), NewState :: term()}.
+handle_cast(timeout, State) ->
+   
+    {noreply, State};
+
+
 handle_cast(_Request, State) ->
     {noreply, State}.
 
@@ -328,21 +328,3 @@ format_status(_Opt, Status) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-check_rd_running(_Interval,N_,true)->
-    true;
-check_rd_running(Interval,0,true)->
-    true;
-check_rd_running(Interval,0,false)->
-    false;
-check_rd_running(Interval,N,IsRunning)->
-    case rpc:call(node(),rd,ping,[],5000) of
-	pong->
-	    NewIsRunning=true,
-	    NewN=N;
-	_->
-	    timer:sleep(Interval),
-	    NewIsRunning=false,
-	    NewN=N-1
-    end,
-    check_rd_running(Interval,NewN,NewIsRunning).
-	 

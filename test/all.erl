@@ -256,7 +256,7 @@ test_tradfri_control_outlet()->
     false=zigbee_devices:call("outlet_1",is_off,[]),
     true=zigbee_devices:call("outlet_1",is_on,[]),
 
-    {200,_,_}={200,_,_}=zigbee_devices:call("outlet_1",turn_off,[]),
+    {200,_,_}=zigbee_devices:call("outlet_1",turn_off,[]),
     timer:sleep(2000),
     true=zigbee_devices:call("outlet_1",is_off,[]),
     false=zigbee_devices:call("outlet_1",is_on,[]),
